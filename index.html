@@ -1,0 +1,120 @@
+Андрей, [06.07.2025 18:08]
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Магазин продуктов</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 10px; max-width: 600px; margin: 0 auto; }
+        .category { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .product { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        #cart { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        .telegram-only { display: none; }
+    </style>
+</head>
+<body>
+    <h1>🍏 Магазин продуктов</h1>
+    
+    <div class="category">
+        <h2>🥦 Овощи</h2>
+        <div class="product">
+            <h3>Картофель</h3>
+            <p>Цена: 50 руб/кг</p>
+            <button onclick="addToCart('Картофель', 50)">В корзину</button>
+        </div>
+        <div class="product">
+            <h3>Морковь</h3>
+            <p>Цена: 40 руб/кг</p>
+            <button onclick="addToCart('Морковь', 40)">В корзину</button>
+        </div>
+    </div>
+    
+    <div class="category">
+        <h2>🍎 Фрукты</h2>
+        <div class="product">
+            <h3>Яблоки</h3>
+            <p>Цена: 80 руб/кг</p>
+            <button onclick="addToCart('Яблоки', 80)">В корзину</button>
+        </div>
+        <div class="product">
+            <h3>Бананы</h3>
+            <p>Цена: 70 руб/кг</p>
+            <button onclick="addToCart('Бананы', 70)">В корзину</button>
+        </div>
+    </div>
+    
+    <div id="cart">
+        <h3>🛒 Ваш заказ:</h3>
+        <div id="cart-items" style="margin: 10px 0;"></div>
+        <div id="order-form">
+            <input type="text" id="name" placeholder="Ваше имя" required style="width: 100%; padding: 8px; margin: 5px 0;"><br>
+            <input type="tel" id="phone" placeholder="Телефон" required style="width: 100%; padding: 8px; margin: 5px 0;"><br>
+            <textarea id="address" placeholder="Адрес доставки" required style="width: 100%; padding: 8px; margin: 5px 0;"></textarea><br>
+            <button id="submit-btn" style="background: #007bff;">Оформить заказ</button>
+        </div>
+    </div>
+
+    <div id="telegram-init" class="telegram-only"></div>
+
+    <script>
+        // Проверка Telegram WebApp
+        const isTelegram = window.Telegram?.WebApp;
+        if (isTelegram) {
+            document.getElementById('telegram-init').classList.remove('telegram-only');
+            Telegram.WebApp.expand();
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-web-app.js';
+            document.head.appendChild(script);
+        }
+
+        // Логика корзины
+        let cart = [];
+        
+        function addToCart(name, price) {
+            cart.push({name, price});
+            updateCart();
+        }
+        
+        function updateCart() {
+            const cartItems = document.getElementById('cart-items');
+            cartItems.innerHTML = cart.map(item => 
+                <div>${item.name} - ${item.price} руб. <button onclick="removeFromCart('${item.name}')">❌</button></div>
+            ).join('');
+        }
+        
+        function removeFromCart(name) {
+            cart = cart.filter(item => item.name !== name);
+            updateCart();
+        }
+
+        // Оформление заказа
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+            
+            if (!name  !phone  !address) {
+                alert('Заполните все поля!');
+                return;
+            }
+            
+            const orderData = {
+                name, phone, address,
+                cart,
+                total: cart.reduce((sum, item) => sum + item.price, 0)
+            };
+            
+            if (isTelegram) {
+                Telegram.WebApp.sendData(JSON.stringify(orderData));
+                Telegram.WebApp.close();
+            } else {
+                alert(`Заказ принят!\nИмя: ${name}\nТелефон: ${phone}\nАдрес: ${address}\nТовары: ${cart.map(i => i.name).join(', ')}\nИтого: ${orderData.total} руб.`);
+                cart = [];
+                updateCart();
+                document.getElementById('order-form').reset();
+            }
+        });
+    </script>
+</body>
+</html>
